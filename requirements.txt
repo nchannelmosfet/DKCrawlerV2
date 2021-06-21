@@ -1,0 +1,6 @@
+playwright
+pandas
+jupyterlab
+ipywidgets
+openpyxl
+xlrd

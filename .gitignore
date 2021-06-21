@@ -1,0 +1,7 @@
+venv
+.idea
+.vscode
+*.log
+# data files
+*.csv
+*.xlsx
