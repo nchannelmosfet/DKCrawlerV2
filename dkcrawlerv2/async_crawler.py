@@ -24,6 +24,7 @@ class AsyncCrawler:
             'cur-page': '[data-testid="pagination-container"] > button[disabled]',
             'next-page': '[data-testid="btn-next-page"]',
             'next-page-alt': '[data-testid="pagination-container"] > button[disabled] + button',
+            'next-page-rendered': '[data-testid="pagination-container"] > button[value="{0}"] + button[disabled]',
             'page-nav': '[data-testid="per-page-selector-container"] > div:last-child > span',
             'active-parts': '[data-testid="filter-1989-option-0"]',
             'digikey.com': '[track-data="Choose Your Location – Stay on US Site"] > span',
@@ -111,13 +112,14 @@ class AsyncCrawler:
         for offset in [pos_offset, neg_offset]:
             await page.evaluate(f"window.scrollTo(0, {offset});")
 
-    async def go_next_page(self, page, use_next_page_alt):
+    async def go_next_page(self, page, cur_page, use_next_page_alt):
         async with page.expect_navigation(wait_until='networkidle'):
             if use_next_page_alt:
                 await page.click(self.selectors['next-page-alt'])
                 await asyncio.sleep(2.0)
             else:
                 await page.click(self.selectors['next-page'])
+            await page.wait_for_selector(self.selectors['next-page-rendered'].format(cur_page))
 
     async def crawl(self):
         async with async_playwright() as playwright:
@@ -149,7 +151,7 @@ class AsyncCrawler:
                     break
 
                 try:
-                    await self.go_next_page(page, use_next_page_alt)
+                    await self.go_next_page(page, cur_page, use_next_page_alt)
                     self.logger.info('Go to next page')
                 except TimeoutError:
                     pass
@@ -160,7 +162,7 @@ class AsyncCrawler:
 
 
 async def main():
-    start_url = 'https://www.digikey.com/en/products/filter/thermal-heat-sinks/219'
+    start_url = 'https://www.digikey.com/en/products/filter/thermal-heat-pipes-vapor-chambers/977'
     base_download_dir = r'../download'
     crawler = AsyncCrawler(start_url, base_download_dir, headless=True)
     await crawler.crawl()
