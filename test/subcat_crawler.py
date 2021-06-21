@@ -1,10 +1,10 @@
-from dkcrawlerv2 import AllSubCategoryCrawler
+from dkcrawlerv2 import SubCategoryURLCrawler
 import asyncio
 
 
 async def main():
     url = 'https://www.digikey.com/en/products/'
-    crawler = AllSubCategoryCrawler(url, headless=False)
+    crawler = SubCategoryURLCrawler(url, headless=False)
     subcat_urls = await crawler.crawl()
     print(subcat_urls)
 

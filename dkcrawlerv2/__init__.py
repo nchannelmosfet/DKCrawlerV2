@@ -1,1 +1,1 @@
-from dkcrawlerv2.crawlers import AsyncDataCrawler, AllSubCategoryCrawler
+from dkcrawlerv2.crawlers import AsyncDataCrawler, SubCategoryURLCrawler

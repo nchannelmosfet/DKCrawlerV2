@@ -8,7 +8,7 @@ import pandas as pd
 from urllib.parse import urljoin
 
 
-class AllSubCategoryCrawler:
+class SubCategoryURLCrawler:
     def __init__(self, url, headless=True):
         self.url = url
         self.headless = headless
