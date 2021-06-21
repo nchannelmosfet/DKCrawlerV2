@@ -1,12 +1,40 @@
 import asyncio
 import os
 import re
-import logging
 from playwright.async_api import async_playwright
 from playwright._impl._api_types import TimeoutError
+from dkcrawlerv2.utils import get_file_list, concat_data, set_up_logger
+import pandas as pd
 
 
-class AsyncCrawler:
+class AllSubCategoryCrawler:
+    def __init__(self, url, headless=True):
+        self.url = url
+        self.headless = headless
+
+    async def scroll_to_bottom(self, page):
+        y_offset = 0
+        offset_step = 900
+        while True:
+            y_offset_js = '() => window.pageYOffset;'
+            old_y_offset = await page.evaluate(y_offset_js)
+            y_offset += offset_step
+            await asyncio.sleep(1)
+            await page.evaluate(f"window.scrollTo(0, {y_offset});")
+            new_y_offset = await page.evaluate(y_offset_js)
+            if old_y_offset == new_y_offset:
+                break
+
+    async def crawl(self):
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(headless=self.headless)
+            context = await browser.new_context()
+            page = await context.new_page()
+            await page.goto(self.url)
+            await self.scroll_to_bottom(page)
+
+
+class AsyncDataCrawler:
     def __init__(self, start_url, base_download_dir, headless=True):
         self.start_url = start_url
         self.base_download_dir = base_download_dir
@@ -45,31 +73,7 @@ class AsyncCrawler:
         self.downloaded_pages = set()
 
         self.log_file_path = os.path.join(self.download_dir, f'{self.subcategory}.log')
-        self.create_log_file()
-        self.logger = self.set_up_logger()
-
-    def create_log_file(self):
-        with open(self.log_file_path, 'w+') as f:
-            f.write('')
-
-    def set_up_logger(self):
-        formatter = logging.Formatter(
-            '[%(asctime)s] [%(name)s] [%(levelname)s]: %(message)s',
-            "%Y-%m-%d %H:%M:%S"
-        )
-        logger = logging.getLogger(self.subcategory)
-        if len(logger.handlers) > 0:
-            logger.handlers.clear()
-        logger.setLevel(logging.INFO)
-        console = logging.StreamHandler()
-        console.setLevel(logging.INFO)
-        console.setFormatter(formatter)
-        logger.addHandler(console)
-        file_handler = logging.FileHandler(self.log_file_path)
-        file_handler.setLevel(logging.INFO)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-        return logger
+        self.logger = set_up_logger(self.subcategory, self.log_file_path)
 
     async def config_page(self, page):
         viewport_size = {'width': 1920, 'height': 1080}
@@ -121,6 +125,20 @@ class AsyncCrawler:
                 await page.click(self.selectors['next-page'])
             await page.wait_for_selector(self.selectors['next-page-rendered'].format(cur_page))
 
+    def combine_data(self):
+        in_files = get_file_list(self.download_dir, suffix='.csv')
+        out_path = os.path.join(self.download_dir, f'{self.subcategory}_all.xlsx')
+        out_path = os.path.realpath(out_path)
+        combined_data = concat_data(in_files)
+        if any(combined_data['Stock'].astype(str).str.contains('.', regex=False)):
+            alert = 'ALERT!\nColumn "Stock" contains decimal numbers.\nColumn misaligned.\nFix data mannually. '
+            self.logger.warning(alert)
+        combined_data['Stock'] = combined_data['Stock'].astype(str).str.replace(',', '')
+        combined_data['Stock'] = pd.to_numeric(combined_data['Stock'], errors='coerce')
+        combined_data['Subcategory'] = self.subcategory
+        combined_data.to_excel(out_path, index=False)
+        self.logger.info(f'{self.subcategory} data combined and saved at: \n{out_path}')
+
     async def crawl(self):
         async with async_playwright() as playwright:
             browser = await playwright.chromium.launch(headless=self.headless)
@@ -139,13 +157,12 @@ class AsyncCrawler:
                 if cur_page not in self.downloaded_pages:
                     self.downloaded_pages.add(cur_page)
                     self.logger.info({'Current Page': cur_page, 'Max Page': self.max_page})
-                    filename = f'{self.subcategory}{cur_page}.csv'
+                    filename = f'{self.subcategory}_{cur_page}.csv'
                     await self.download(page, filename)
                 else:
                     self.logger.warning(f'Page {cur_page} has already been downloaded. ')
                     use_next_page_alt = True
                     await self.scroll_up_down(page)
-                    await asyncio.sleep(3.0)
 
                 if len(self.downloaded_pages) == self.max_page or cur_page == self.max_page:
                     break
@@ -159,12 +176,17 @@ class AsyncCrawler:
             await context.close()
             await browser.close()
             self.logger.info('Crawl finished, closing browser and browser context. ')
+            self.combine_data()
 
 
 async def main():
-    start_url = 'https://www.digikey.com/en/products/filter/thermal-heat-pipes-vapor-chambers/977'
-    base_download_dir = r'../download'
-    crawler = AsyncCrawler(start_url, base_download_dir, headless=True)
+    # start_url = 'https://www.digikey.com/en/products/filter/thermal-heat-pipes-vapor-chambers/977'
+    # base_download_dir = r'../download'
+    # crawler = AsyncDataCrawler(start_url, base_download_dir, headless=True)
+    # await crawler.crawl()
+
+    url = 'https://www.digikey.com/en/products'
+    crawler = AllSubCategoryCrawler(url, headless=False)
     await crawler.crawl()
 
 
