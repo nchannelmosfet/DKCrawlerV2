@@ -5,6 +5,7 @@ from playwright.async_api import async_playwright
 from playwright._impl._api_types import TimeoutError
 from dkcrawlerv2.utils import get_file_list, concat_data, set_up_logger
 import pandas as pd
+from urllib.parse import urljoin
 
 
 class AllSubCategoryCrawler:
@@ -32,6 +33,10 @@ class AllSubCategoryCrawler:
             page = await context.new_page()
             await page.goto(self.url)
             await self.scroll_to_bottom(page)
+            subcat_elems = await page.query_selector_all('[data-testid="subcategories-items"]')
+            subcat_urls = [await el.get_attribute('href') for el in subcat_elems]
+            subcat_urls = [urljoin(self.url, url) for url in subcat_urls]
+            return subcat_urls
 
 
 class AsyncDataCrawler:
@@ -177,18 +182,3 @@ class AsyncDataCrawler:
             await browser.close()
             self.logger.info('Crawl finished, closing browser and browser context. ')
             self.combine_data()
-
-
-async def main():
-    # start_url = 'https://www.digikey.com/en/products/filter/thermal-heat-pipes-vapor-chambers/977'
-    # base_download_dir = r'../download'
-    # crawler = AsyncDataCrawler(start_url, base_download_dir, headless=True)
-    # await crawler.crawl()
-
-    url = 'https://www.digikey.com/en/products'
-    crawler = AllSubCategoryCrawler(url, headless=False)
-    await crawler.crawl()
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
