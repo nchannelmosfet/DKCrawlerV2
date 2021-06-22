@@ -4,7 +4,7 @@ from dkcrawlerv2.utils import set_up_logger
 from urllib.parse import urljoin
 
 
-class SubCategoryURLCrawler:
+class AllSubCategoryCrawler:
     def __init__(self, url, headless=True, log_file_path=None):
         self.url = url
         self.headless = headless
@@ -35,9 +35,16 @@ class SubCategoryURLCrawler:
             page = await context.new_page()
             await page.goto(self.url)
             await self.scroll_to_bottom(page)
+
             subcat_elems = await page.query_selector_all('[data-testid="subcategories-items"]')
             subcat_urls = [await el.get_attribute('href') for el in subcat_elems]
             subcat_urls = [urljoin(self.url, url) for url in subcat_urls]
             subcat_urls_out = '\n'.join(subcat_urls)
+
             self.logger.info(f'Extracted subcategory URLs: \n{subcat_urls_out}')
+            if self.log_file_path is not None:
+                self.logger.info(f'Log file exported to {self.log_file_path}')
+
+            await context.close()
+            await browser.close()
             return subcat_urls
