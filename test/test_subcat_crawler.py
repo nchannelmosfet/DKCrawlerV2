@@ -4,9 +4,9 @@ import asyncio
 
 async def main():
     url = 'https://www.digikey.com/en/products/'
-    crawler = SubCategoryURLCrawler(url, headless=False)
+    crawler = SubCategoryURLCrawler(url, headless=False, log_file_path='subcat_urls.log')
     subcat_urls = await crawler.crawl()
-    print(subcat_urls)
+    print(f'Extract {len(subcat_urls)} subcategory URLs. ')
 
 
 if __name__ == '__main__':

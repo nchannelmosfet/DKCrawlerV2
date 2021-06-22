@@ -43,9 +43,7 @@ def concat_data(in_files):
     return combined_data
 
 
-def set_up_logger(logger_name, log_file_path):
-    with open(log_file_path, 'w+') as f:
-        f.write('')
+def set_up_logger(logger_name, log_file_path=None):
     formatter = logging.Formatter(
         '[%(asctime)s] [%(name)s] [%(levelname)s]: %(message)s',
         "%Y-%m-%d %H:%M:%S"
@@ -58,8 +56,12 @@ def set_up_logger(logger_name, log_file_path):
     console.setLevel(logging.INFO)
     console.setFormatter(formatter)
     logger.addHandler(console)
-    file_handler = logging.FileHandler(log_file_path)
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+
+    if log_file_path is not None:
+        with open(log_file_path, 'w+') as f:
+            f.write('')
+        file_handler = logging.FileHandler(log_file_path)
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
     return logger
