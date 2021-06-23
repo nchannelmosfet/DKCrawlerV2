@@ -5,7 +5,7 @@ import logging
 from pandas.errors import EmptyDataError, ParserError
 
 
-def batches(seq, batch_size):
+def get_batches(seq, batch_size=1):
     for i in range(0, len(seq), batch_size):
         yield seq[i:i + batch_size]
 
