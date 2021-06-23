@@ -3,7 +3,7 @@ import os
 import re
 from playwright.async_api import async_playwright
 from playwright._impl._api_types import TimeoutError
-from dkcrawlerv2.utils import get_file_list, concat_data, set_up_logger
+from dkcrawlerv2.utils import get_file_list, concat_data, set_up_logger, batches
 import pandas as pd
 
 
@@ -150,3 +150,20 @@ class AsyncDataCrawler:
             await browser.close()
             self.logger.info('Crawl finished, closing browser and browser context. ')
             self.combine_data()
+
+
+class AsyncDataCrawlerRunner:
+    def __init__(self, start_urls, base_download_dir, headless=True):
+        self.start_urls = start_urls
+        self.base_download_dir = base_download_dir
+        self.headless = headless
+        self.max_concurrency = 3
+
+    async def create_crawl_job(self, url):
+        crawler = AsyncDataCrawler(url, self.base_download_dir, self.headless)
+        await crawler.crawl()
+
+    async def crawl(self):
+        tasks = [await self.create_crawl_job(url) for url in self.start_urls]
+        for task_batch in batches(tasks, batch_size=self.max_concurrency):
+            await asyncio.gather(*task_batch)
