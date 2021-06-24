@@ -43,9 +43,8 @@ def concat_data(in_files):
             dfs.append(df)
         except EmptyDataError:
             print(f'"{file}" is empty')
-    combined_data = pd.concat(dfs, join='inner', ignore_index=True)
-    # combined_data.drop_duplicates(inplace=True)
-    return combined_data
+    combined_df = pd.concat(dfs, join='inner', ignore_index=True)
+    return combined_df
 
 
 def set_up_logger(logger_name, log_file_path=None):

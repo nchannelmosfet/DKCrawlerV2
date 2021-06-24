@@ -98,18 +98,18 @@ class AsyncDataCrawler:
                 await page.click(self.selectors['next-page'])
             await page.wait_for_selector(self.selectors['next-page-rendered'].format(cur_page))
 
-    def combine_data(self):
+    def combine_pages(self):
         in_files = get_file_list(self.download_dir, suffix='.csv')
         out_path = os.path.join(self.download_dir, f'{self.subcategory}_all.xlsx')
         out_path = os.path.realpath(out_path)
-        combined_data = concat_data(in_files)
-        if any(combined_data['Stock'].astype(str).str.contains('.', regex=False)):
+        combined_df = concat_data(in_files)
+        if any(combined_df['Stock'].astype(str).str.contains('.', regex=False)):
             alert = 'ALERT!\nColumn "Stock" contains decimal numbers.\nColumn misaligned.\nFix data mannually. '
             self.logger.warning(alert)
-        combined_data['Stock'] = combined_data['Stock'].astype(str).str.replace(',', '')
-        combined_data['Stock'] = pd.to_numeric(combined_data['Stock'], errors='coerce')
-        combined_data['Subcategory'] = self.subcategory
-        combined_data.to_excel(out_path, index=False)
+        combined_df['Stock'] = combined_df['Stock'].astype(str).str.replace(',', '')
+        combined_df['Stock'] = pd.to_numeric(combined_df['Stock'], errors='coerce')
+        combined_df['Subcategory'] = self.subcategory
+        combined_df.to_excel(out_path, index=False)
         self.logger.info(f'{self.subcategory} data combined and saved at: \n{out_path}')
 
     async def crawl(self):
@@ -149,21 +149,44 @@ class AsyncDataCrawler:
             await context.close()
             await browser.close()
             self.logger.info('Crawl finished, closing browser and browser context. ')
-            self.combine_data()
+            self.combine_pages()
 
 
 class AsyncDataCrawlerRunner:
-    def __init__(self, start_urls, base_download_dir, headless=True):
+    def __init__(self, start_urls, base_download_dir, headless=True, debug=False):
         self.start_urls = start_urls
         self.base_download_dir = base_download_dir
         self.headless = headless
+        self.debug = debug
         self.max_concurrency = 3
+        self.logger = set_up_logger(self.__class__.__name__)
+        params = {
+            'start_urls': self.start_urls,
+            'base_download_dir': os.path.realpath(self.base_download_dir),
+            'headless': self.headless,
+            'max_concurrency': self.max_concurrency,
+        }
+        if self.debug:
+            self.logger.info(f'CrawlerRunner initialized with params: {params}')
 
     async def create_crawl_job(self, url):
         crawler = AsyncDataCrawler(url, self.base_download_dir, self.headless)
+        if self.debug:
+            self.logger.info(f'Created crawl job for URL: {url}')
         await crawler.crawl()
 
-    async def crawl(self):
+    async def crawl_all(self):
         tasks = [self.create_crawl_job(url) for url in self.start_urls]
         for task_batch in get_batches(tasks, batch_size=self.max_concurrency):
             await asyncio.gather(*task_batch)
+
+    def combine_subcat_data(self):
+        in_files = get_file_list(self.base_download_dir, suffix='all.xlsx')
+        out_path = os.path.join(self.base_download_dir, 'combine.xlsx')
+        df = concat_data(in_files)
+        df.to_excel(out_path)
+        if self.debug:
+            self.logger.info(
+                f'Combined common-column data of all subcategories. \n'
+                f'Exported combined data to {out_path}'
+            )

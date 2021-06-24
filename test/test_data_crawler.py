@@ -17,13 +17,14 @@ async def test_data_crawler_runner():
         'https://www.digikey.com/en/products/filter/fans-accessories/223',
         'https://www.digikey.com/en/products/filter/rack-thermal-management/602'
     ]
-    base_download_dir = r'../download'
-    crawler_runner = AsyncDataCrawlerRunner(start_urls, base_download_dir, headless=False)
-    await crawler_runner.crawl()
+    base_download_dir = r'../download/session1'
+    crawler_runner = AsyncDataCrawlerRunner(start_urls, base_download_dir, headless=True)
+    await crawler_runner.crawl_all()
+    crawler_runner.combine_subcat_data()
 
 
 async def main():
-    await test_one_data_crawler()
+    # await test_one_data_crawler()
     await test_data_crawler_runner()
 
 
