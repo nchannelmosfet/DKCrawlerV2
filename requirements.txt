@@ -2,5 +2,6 @@ playwright
 pandas
 jupyterlab
 ipywidgets
+ipyfilechooser
 openpyxl
 xlrd

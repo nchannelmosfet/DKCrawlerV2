@@ -16,6 +16,7 @@ setuptools.setup(
         'ipywidgets',
         'openpyxl',
         'xlrd',
+        'ipyfilechooser'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
