@@ -11,13 +11,14 @@ async def test_one_data_crawler():
 
 async def test_data_crawler_runner():
     start_urls = [
-        'https://www.digikey.com/en/products/filter/thermal-thermoelectric-peltier-modules/222',
-        'https://www.digikey.com/en/products/filter/thermal-flexible-heaters/1005',
-        'https://www.digikey.com/en/products/filter/fans-finger-guards-filters-sleeves/221',
+        # 'https://www.digikey.com/en/products/filter/thermal-thermoelectric-peltier-modules/222',
+        # 'https://www.digikey.com/en/products/filter/thermal-flexible-heaters/1005',
+        # 'https://www.digikey.com/en/products/filter/fans-finger-guards-filters-sleeves/221',
         'https://www.digikey.com/en/products/filter/fans-accessories/223',
-        'https://www.digikey.com/en/products/filter/rack-thermal-management/602'
+        'https://www.digikey.com/en/products/filter/rack-thermal-management/602',
+        'https://www.digikey.com/en/products/filter/thermal-heat-sinks/219'
     ]
-    base_download_dir = r'../download/session1'
+    base_download_dir = r'../download'
     crawler_runner = AsyncDataCrawlerRunner(start_urls, base_download_dir, headless=True)
     await crawler_runner.crawl_all()
     crawler_runner.combine_subcat_data()
