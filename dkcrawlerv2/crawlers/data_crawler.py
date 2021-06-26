@@ -3,7 +3,10 @@ import os
 import re
 from playwright.async_api import async_playwright
 from playwright._impl._api_types import TimeoutError
-from dkcrawlerv2.utils import get_file_list, concat_data, set_up_logger, get_batches, get_latest_session_index
+from dkcrawlerv2.utils import (
+    get_file_list, concat_data, set_up_logger,
+    get_batches, get_latest_session_index, jsonify
+)
 import pandas as pd
 import json
 
@@ -176,10 +179,7 @@ class AsyncDataCrawlerRunner:
             'headless': self.headless,
             'max_concurrency': self.max_concurrency,
         }
-        pretty_params = json.dumps(
-            params, sort_keys=True,
-            indent=4, separators=(',', ': ')
-        )
+        pretty_params = jsonify(params)
         self.logger.info(
             f'CrawlerRunner initialized with params:\n{pretty_params}'
         )

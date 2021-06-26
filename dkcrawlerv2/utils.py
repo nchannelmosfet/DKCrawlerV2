@@ -1,7 +1,8 @@
 import os
 import re
-import pandas as pd
+import json
 import logging
+import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
 
 
@@ -77,3 +78,10 @@ def read_urls(file_path):
     lines = [line.strip() for line in lines]
     urls = [line for line in lines if (not line.startswith('#')) and len(line) > 0]
     return urls
+
+
+def jsonify(obj):
+    pretty_json = json.dumps(
+        obj, indent=4, separators=(',', ': ')
+    )
+    return '\n' + pretty_json
