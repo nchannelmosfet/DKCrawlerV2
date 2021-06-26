@@ -85,3 +85,7 @@ def jsonify(obj):
         obj, indent=4, separators=(',', ': ')
     )
     return '\n' + pretty_json
+
+
+def remove_url_qs(url):
+    return url.split('?')[0]
