@@ -1,0 +1,4 @@
+# Put valid subcategory URLs below to crawl, 1 URL per line
+# Comments must start with '#'
+https://www.digikey.com/en/products/filter/fans-accessories/223
+https://www.digikey.com/en/products/filter/rack-thermal-management/602

@@ -69,3 +69,11 @@ def set_up_logger(logger_name, log_file_path=None):
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
     return logger
+
+
+def read_urls(file_path):
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+    lines = [line.strip() for line in lines]
+    urls = [line for line in lines if (not line.startswith('#')) and len(line) > 0]
+    return urls
