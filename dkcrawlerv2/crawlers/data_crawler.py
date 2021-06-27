@@ -4,11 +4,10 @@ import re
 from playwright.async_api import async_playwright
 from playwright._impl._api_types import TimeoutError
 from dkcrawlerv2.utils import (
-    get_file_list, concat_data, set_up_logger,
+    get_file_list, concat_data, set_up_logger, remove_url_qs,
     get_batches, get_latest_session_index, jsonify
 )
 import pandas as pd
-import json
 
 
 class AsyncDataCrawler:
@@ -38,9 +37,10 @@ class AsyncDataCrawler:
             'dkpn-sort-asc': 'button[data-testid="sort--104-asc"] > svg',
             'remove-filters': '[data-testid="filter-box-remove-all"]',
             'dkpn-sorted': '[data-testid="sort--104-asc"][disabled]',
+            'product-count': '[data-testid="product-count"]',
         }
 
-        url_split = start_url.split('/')
+        url_split = remove_url_qs(start_url).split('/')
         self.subcategory = url_split[-2].replace('-', '_')
         self.product_id = url_split[-1]
         self.download_dir = os.path.join(base_download_dir, f'{self.subcategory}_{self.product_id}')
@@ -65,12 +65,24 @@ class AsyncDataCrawler:
 
         await page.click(self.selectors['per-page-selector'])
         await page.click(self.selectors['per-page-100'])
-        await page.wait_for_function(
-            '''
-            () => document.querySelectorAll('[data-testid="data-table-0-row"]').length === 100;
-            '''
-        )
         self.logger.info('Set page size to 100 item per page. ')
+
+        try:
+            await page.wait_for_function(
+                '''
+                function checkRowCount() {
+                    let product_count = parseInt(document.querySelector('[data-testid="product-count"]').textContent);
+                    let row_count = document.querySelectorAll('[data-testid="data-table-0-row"]').length;
+                    if (product_count < 100) {
+                        return row_count === product_count;
+                    } else {
+                        return row_count === 100;
+                    }
+                }
+                '''
+            )
+        except TimeoutError:
+            pass
 
         await page.click(self.selectors['dkpn-sort-asc'])
         await page.wait_for_selector(self.selectors['dkpn-sorted'])
@@ -187,7 +199,15 @@ class AsyncDataCrawlerRunner:
     async def create_crawl_job(self, url):
         crawler = AsyncDataCrawler(url, self.download_dir, self.headless)
         self.logger.info(f'Created crawl job for URL: {url}')
-        await crawler.crawl()
+        try:
+            await crawler.crawl()
+        except TimeoutError:
+            error_msg = {
+                'url': url,
+                'error': 'Timeout 30s exceeded.',
+                'msg': 'Retry crawling with AppSubCat'
+            }
+            self.logger.error(jsonify(error_msg))
 
     async def crawl_all(self):
         tasks = [self.create_crawl_job(url) for url in self.start_urls]

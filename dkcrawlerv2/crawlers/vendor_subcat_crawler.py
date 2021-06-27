@@ -8,10 +8,13 @@ import random
 
 
 class VendorSubCategoryCrawler:
-    def __init__(self, vendor_url, headless=True, log_file_path=None):
+    def __init__(self, vendor_url, headless=True, log_file_path=None, target_vendor_only=True, in_stock_only=True):
         self.vendor_url = vendor_url
         self.headless = headless
         self.log_file_path = log_file_path
+        self.target_vendor_only = target_vendor_only
+        self.in_stock_only = in_stock_only
+
         self.vendor_name = self.vendor_url.split('/')[-1]
         self.logger = set_up_logger(self.vendor_name, self.log_file_path)
         self.subcat_url_info = []
@@ -61,7 +64,7 @@ class VendorSubCategoryCrawler:
         final_subcat_urls = []
         if 'filter' in cur_url:
             min_qty = await page.text_content('[data-atag="tr-minQty"] > span > div:last-child')
-            if min_qty == 'Non-Stock':
+            if min_qty == 'Non-Stock' and self.in_stock_only:
                 ignored_msg = {
                     'url': cur_url,
                     'action': 'ignored',
@@ -70,6 +73,11 @@ class VendorSubCategoryCrawler:
                 self.logger.info(jsonify(ignored_msg))
                 return []
             else:
+                if not self.target_vendor_only:
+                    # remove query string to select all vendors for the subcategory
+                    cur_url = remove_url_qs(cur_url)
+                    await page.goto(cur_url)
+
                 await page.click(self.selectors['in-stock'])
                 await page.click(self.selectors['apply-all'])
                 await page.wait_for_selector(self.selectors['remove-filters'])
@@ -92,8 +100,9 @@ class VendorSubCategoryCrawler:
             return []
         else:
             subcat_elems = await page.query_selector_all('[data-testid="subcategories-items"]')
-            subcat_urls = [remove_url_qs(urljoin(self.vendor_url, await el.get_attribute('href')))
+            subcat_urls = [urljoin(self.vendor_url, await el.get_attribute('href'))
                            for el in subcat_elems]
+
             further_processing_msg = {
                 'url': cur_url,
                 'action': 'Further processing of sub urls. ',
