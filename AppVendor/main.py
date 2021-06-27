@@ -11,16 +11,24 @@ async def main():
     base_download_dir = os.path.join(os.path.dirname(__file__), 'downloads', vendor_name)
     os.makedirs(base_download_dir, exist_ok=True)
 
+    target_vendor_only = True
+    in_stock_only = True
+    headless = True
     log_file_path = os.path.join(base_download_dir, f'{vendor_name}.log')
+
     vendor_crawler = VendorSubCategoryCrawler(
-        vendor_url, headless=False,
-        log_file_path=log_file_path, target_vendor_only=False
+        vendor_url,
+        log_file_path=log_file_path,
+        target_vendor_only=target_vendor_only,
+        in_stock_only=in_stock_only,
+        headless=headless,
     )
     subcat_urls = await vendor_crawler.crawl()
 
     crawler_runner = AsyncDataCrawlerRunner(
         subcat_urls, base_download_dir,
-        headless=False, session_name=None
+        headless=headless, session_name=None,
+        in_stock_only=in_stock_only
     )
     await crawler_runner.crawl_all()
     crawler_runner.combine_subcat_data()

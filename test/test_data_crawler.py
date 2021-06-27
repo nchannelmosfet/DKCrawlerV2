@@ -3,9 +3,9 @@ import asyncio
 
 
 async def test_one_data_crawler():
-    start_url = 'https://www.digikey.com/en/products/filter/thermal-heat-pipes-vapor-chambers/977'
+    start_url = 'https://www.digikey.com/en/products/filter/circular-connectors/436?s=N4IgjCBcoLQBxVAYygMwIYBsDOBTANCAPZQDa4ATAMwgC6Avo0A'
     base_download_dir = r'../download'
-    crawler = AsyncDataCrawler(start_url, base_download_dir, headless=True)
+    crawler = AsyncDataCrawler(start_url, base_download_dir, headless=False)
     await crawler.crawl()
 
 
@@ -25,8 +25,8 @@ async def test_data_crawler_runner():
 
 
 async def main():
-    # await test_one_data_crawler()
-    await test_data_crawler_runner()
+    await test_one_data_crawler()
+    # await test_data_crawler_runner()
 
 
 if __name__ == '__main__':

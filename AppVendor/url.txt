@@ -2,4 +2,5 @@
 # Comments must start with '#'
 # https://www.digikey.com/en/supplier-centers/adam-tech
 # https://www.digikey.com/en/supplier-centers/cnc-tech
-https://www.digikey.com/en/supplier-centers/bk-precision
+# https://www.digikey.com/en/supplier-centers/bk-precision
+https://www.digikey.com/en/supplier-centers/assmann-wsw-components

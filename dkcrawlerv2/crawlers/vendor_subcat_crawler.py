@@ -51,65 +51,73 @@ class VendorSubCategoryCrawler:
             return sorted_subcat_urls
 
     async def parse_subcat(self, page: Page, cat_url):
-        await page.goto(cat_url)
-        cur_url = page.url
+        try:
+            await page.goto(cat_url)
+            cur_url = page.url
 
-        processing_msg = {
-            'url': cur_url,
-            'action': 'processing'
-        }
-        self.logger.info(jsonify(processing_msg))
+            processing_msg = {
+                'url': cur_url,
+                'action': 'processing'
+            }
+            self.logger.info(jsonify(processing_msg))
 
-        await asyncio.sleep(1)
-        final_subcat_urls = []
-        if 'filter' in cur_url:
-            min_qty = await page.text_content('[data-atag="tr-minQty"] > span > div:last-child')
-            if min_qty == 'Non-Stock' and self.in_stock_only:
+            await asyncio.sleep(1)
+            final_subcat_urls = []
+            if 'filter' in cur_url:
+                min_qty = await page.text_content('[data-atag="tr-minQty"] > span > div:last-child')
+                if min_qty == 'Non-Stock' and self.in_stock_only:
+                    ignored_msg = {
+                        'url': cur_url,
+                        'action': 'ignored',
+                        'reason': f'All products are non-stock in this subcategory for {self.vendor_name}.'
+                    }
+                    self.logger.info(jsonify(ignored_msg))
+                    return []
+                else:
+                    if not self.target_vendor_only:
+                        # remove query string to select all vendors for the subcategory
+                        cur_url = remove_url_qs(cur_url)
+                        await page.goto(cur_url)
+
+                    if self.in_stock_only:
+                        await page.click(self.selectors['in-stock'])
+                        await page.click(self.selectors['apply-all'])
+                        await page.wait_for_selector(self.selectors['remove-filters'])
+                        self.logger.info('Select only in-stock items. ')
+
+                    product_count = await page.text_content(self.selectors['product-count'])
+                    product_count = int(re.sub(r'\D', '', product_count))
+                    url_info = {'url': cur_url, 'product_count': product_count}
+                    self.subcat_url_info.append(url_info)
+                    self.logger.info(f'Collected {jsonify(url_info)}')
+                    return final_subcat_urls
+
+            elif 'products/detail' in cur_url:
                 ignored_msg = {
                     'url': cur_url,
                     'action': 'ignored',
-                    'reason': f'All products are non-stock in this subcategory for {self.vendor_name}.'
+                    'reason': f"Current URL is a product detail page. "
                 }
                 self.logger.info(jsonify(ignored_msg))
                 return []
             else:
-                if not self.target_vendor_only:
-                    # remove query string to select all vendors for the subcategory
-                    cur_url = remove_url_qs(cur_url)
-                    await page.goto(cur_url)
+                subcat_elems = await page.query_selector_all('[data-testid="subcategories-items"]')
+                subcat_urls = [urljoin(self.vendor_url, await el.get_attribute('href'))
+                               for el in subcat_elems]
 
-                await page.click(self.selectors['in-stock'])
-                await page.click(self.selectors['apply-all'])
-                await page.wait_for_selector(self.selectors['remove-filters'])
-                self.logger.info('Select only in-stock items. ')
-
-                product_count = await page.text_content(self.selectors['product-count'])
-                product_count = int(re.sub(r'\D', '', product_count))
-                url_info = {'url': cur_url, 'product_count': product_count}
-                self.subcat_url_info.append(url_info)
-                self.logger.info(f'Collected {jsonify(url_info)}')
+                further_processing_msg = {
+                    'url': cur_url,
+                    'action': 'Further processing of sub urls. ',
+                    'sub_urls': subcat_urls,
+                }
+                self.logger.info(jsonify(further_processing_msg))
+                for url in subcat_urls:
+                    urls = await self.parse_subcat(page, url)
+                    final_subcat_urls += urls
                 return final_subcat_urls
 
-        elif 'products/detail' in cur_url:
-            ignored_msg = {
-                'url': cur_url,
-                'action': 'ignored',
-                'reason': f"Current URL is a product detail page. "
-            }
-            self.logger.info(jsonify(ignored_msg))
-            return []
-        else:
-            subcat_elems = await page.query_selector_all('[data-testid="subcategories-items"]')
-            subcat_urls = [urljoin(self.vendor_url, await el.get_attribute('href'))
-                           for el in subcat_elems]
-
-            further_processing_msg = {
-                'url': cur_url,
-                'action': 'Further processing of sub urls. ',
-                'sub_urls': subcat_urls,
-            }
-            self.logger.info(jsonify(further_processing_msg))
-            for url in subcat_urls:
-                urls = await self.parse_subcat(page, url)
-                final_subcat_urls += urls
-            return final_subcat_urls
+        except TimeoutError:
+            retry_delay = 10
+            self.logger.error(f'TimeoutError, retry in {retry_delay}s. ')
+            await asyncio.sleep(retry_delay)
+            return self.parse_subcat(page, cat_url)
