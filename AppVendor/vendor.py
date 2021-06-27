@@ -6,7 +6,7 @@ import os
 
 async def main():
     vendor_url = ''
-    vendor_url = vendor_url or read_urls('url.txt')[0]
+    vendor_url = vendor_url or read_urls('vendor_url.txt')[0]
     vendor_name = vendor_url.split('/')[-1]
     base_download_dir = os.path.join(os.path.dirname(__file__), 'downloads', vendor_name)
     os.makedirs(base_download_dir, exist_ok=True)
