@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="DKCrawlerV2",
-    version="0.0.1",
+    version="0.0.2",
     author="Jerry Wu",
     author_email="nchannelmosfet@gmail.com",
     description="Async Crawler built with PlayWright",
@@ -13,10 +13,8 @@ setuptools.setup(
         'playwright',
         'pandas',
         'scrapy',
-        'ipywidgets',
         'openpyxl',
         'xlrd',
-        'ipyfilechooser'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
