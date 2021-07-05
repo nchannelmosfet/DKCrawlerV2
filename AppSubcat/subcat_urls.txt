@@ -1,5 +1,10 @@
 # Put valid subcategory URLs below to crawl, 1 URL per line
 # Comments must start with '#'
-https://www.digikey.com/en/products/filter/rectangular-cable-assemblies/450
-https://www.digikey.com/en/products/filter/coaxial-cables-rf/456
-https://www.digikey.com/en/products/filter/thermal-heat-sinks/219
+
+# short running jobs
+https://www.digikey.com/en/products/filter/box-accessories/595
+https://www.digikey.com/en/products/filter/boxes/594
+# long running jobs
+# https://www.digikey.com/en/products/filter/rectangular-cable-assemblies/450
+# https://www.digikey.com/en/products/filter/coaxial-cables-rf/456
+# https://www.digikey.com/en/products/filter/thermal-heat-sinks/219
