@@ -89,3 +89,7 @@ def jsonify(obj):
 
 def remove_url_qs(url):
     return url.split('?')[0]
+
+
+def parse_int(s):
+    return int(re.sub(r'\D', '', s))

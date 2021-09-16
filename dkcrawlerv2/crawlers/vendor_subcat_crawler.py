@@ -2,7 +2,7 @@ import asyncio
 import re
 from playwright.async_api import async_playwright
 from playwright._impl._page import Page
-from dkcrawlerv2.utils import set_up_logger, jsonify, remove_url_qs
+from dkcrawlerv2.utils import set_up_logger, jsonify, remove_url_qs, parse_int
 from urllib.parse import urljoin
 import random
 
@@ -24,6 +24,7 @@ class VendorSubCategoryCrawler:
             'apply-all': '[data-testid="apply-all-button"]',
             'remove-filters': '[data-testid="filter-box-remove-all"]',
             'product-count': '[data-testid="product-count"]',
+            'product_count_remaining': '[data-testid="product-count-remaining"]',
         }
 
     async def crawl(self):
@@ -81,12 +82,18 @@ class VendorSubCategoryCrawler:
 
                     if self.in_stock_only:
                         await page.click(self.selectors['in-stock'])
-                        await page.click(self.selectors['apply-all'])
-                        await page.wait_for_selector(self.selectors['remove-filters'])
-                        self.logger.info('Select only in-stock items. ')
+                        product_count_remaining = await page.text_content(self.selectors['product_count_remaining'])
+                        product_count_remaining = parse_int(product_count_remaining)
+
+                        if product_count_remaining <= 1:
+                            await page.click(self.selectors['in-stock'])
+                        else:
+                            await page.click(self.selectors['apply-all'])
+                            await page.wait_for_selector(self.selectors['remove-filters'])
+                            self.logger.info('Select only in-stock items. ')
 
                     product_count = await page.text_content(self.selectors['product-count'])
-                    product_count = int(re.sub(r'\D', '', product_count))
+                    product_count = parse_int(product_count)
                     url_info = {'url': cur_url, 'product_count': product_count}
                     self.subcat_url_info.append(url_info)
                     self.logger.info(f'Collected {jsonify(url_info)}')

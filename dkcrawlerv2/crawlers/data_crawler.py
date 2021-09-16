@@ -5,7 +5,7 @@ from playwright.async_api import async_playwright
 from playwright._impl._api_types import TimeoutError
 from dkcrawlerv2.utils import (
     get_file_list, concat_data, set_up_logger, remove_url_qs,
-    get_batches, get_latest_session_index, jsonify
+    get_batches, get_latest_session_index, jsonify, parse_int
 )
 import pandas as pd
 
@@ -40,7 +40,8 @@ class AsyncDataCrawler:
             'remove-filters': '[data-testid="filter-box-remove-all"]',
             'dkpn-sorted': '[data-testid="sort--104-asc"][disabled]',
             'product-count': '[data-testid="product-count"]',
-            'usa-domain': '''div.domain-suggest__flag[onclick="__footerDomainSelect('com')"]'''
+            'usa-domain': '''div.domain-suggest__flag[onclick="__footerDomainSelect('com')"]''',
+            'product_count_remaining': '[data-testid="product-count-remaining"]',
         }
 
         url_split = remove_url_qs(start_url).split('/')
@@ -61,6 +62,7 @@ class AsyncDataCrawler:
         self.logger.info(f'Set viewport size to: {viewport_size}')
 
         await page.click(self.selectors['cookie_ok'])
+
         try:
             await page.click(self.selectors['usa-domain'], timeout=5000)
         except TimeoutError:
@@ -68,9 +70,15 @@ class AsyncDataCrawler:
 
         if self.in_stock_only:
             await page.click(self.selectors['in-stock'])
-            await page.click(self.selectors['apply-all'])
-            await page.wait_for_selector(self.selectors['remove-filters'])
-            self.logger.info('Select only in-stock items. ')
+            product_count_remaining = await page.text_content(self.selectors['product_count_remaining'])
+            product_count_remaining = parse_int(product_count_remaining)
+
+            if product_count_remaining <= 1:
+                await page.click(self.selectors['in-stock'])
+            else:
+                await page.click(self.selectors['apply-all'])
+                await page.wait_for_selector(self.selectors['remove-filters'])
+                self.logger.info('Select only in-stock items. ')
 
         await page.click(self.selectors['per-page-selector'])
         await page.click(self.selectors['per-page-100'])
