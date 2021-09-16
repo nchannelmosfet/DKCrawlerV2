@@ -40,6 +40,7 @@ class AsyncDataCrawler:
             'remove-filters': '[data-testid="filter-box-remove-all"]',
             'dkpn-sorted': '[data-testid="sort--104-asc"][disabled]',
             'product-count': '[data-testid="product-count"]',
+            'usa-domain': '''div.domain-suggest__flag[onclick="__footerDomainSelect('com')"]'''
         }
 
         url_split = remove_url_qs(start_url).split('/')
@@ -60,6 +61,11 @@ class AsyncDataCrawler:
         self.logger.info(f'Set viewport size to: {viewport_size}')
 
         await page.click(self.selectors['cookie_ok'])
+        try:
+            await page.click(self.selectors['usa-domain'], timeout=5000)
+        except TimeoutError:
+            pass
+
         if self.in_stock_only:
             await page.click(self.selectors['in-stock'])
             await page.click(self.selectors['apply-all'])
@@ -208,7 +214,7 @@ class AsyncDataCrawlerRunner:
         except TimeoutError:
             error_msg = {
                 'url': url,
-                'error': 'Timeout 30s exceeded.',
+                'error': 'Timeout exceeded.',
                 'msg': 'Retry crawling with AppSubCat'
             }
             self.logger.error(jsonify(error_msg))
