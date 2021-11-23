@@ -37,3 +37,27 @@ Just keep click "Next" and install with all default options.
 - Set Shell path to: "C:\Program Files\PowerShell\7\pwsh.exe"
 - Ok or Apply
 
+## Install Digikey Crawler v2
+- Run PowerShell 7 as Administrator 
+  - Click Windows Search icon, type "PowerShell 7"
+  - Run "PowerShell 7 (x64)" as Administrator
+  - Run the following commands on PowerShell 7
+  - ```
+    # change directory (aka folder) to C:/
+    # use your desire directory to store the project
+    cd /
+    
+    # create the Projects directory 
+    mkdir Projects
+    
+    # change directory to C:/Projects/
+    cd Project
+    
+    # clone the repo
+    git clone https://github.com/nchannelmosfet/DKCrawlerV2.git
+    
+    # change directory to C:/Projects/DKCrawlerV2
+    cd DKCrawlerV2
+    
+    # Run install.ps1 script to install the dependencies
+    ```
