@@ -47,16 +47,16 @@ Just keep click "Next" and install with all default options.
   # use your desire directory to store the project
   cd /
   
-  # create the Projects directory 
-  mkdir Projects
+  # create the python-projects directory 
+  mkdir python-projects
   
-  # change directory to C:/Projects/
-  cd Projects
+  # change directory to C:/python-projects/
+  cd python-projects
   
   # clone the repo
   git clone https://github.com/nchannelmosfet/DKCrawlerV2.git
   
-  # change directory to C:/Projects/DKCrawlerV2
+  # change directory to C:/python-projects/DKCrawlerV2
   cd DKCrawlerV2
   
   # Run install.ps1 script to install the dependencies
@@ -71,6 +71,7 @@ Just keep click "Next" and install with all default options.
   - Click "Open Folder as PyCharm Community Edition Project"
 
 - Configure Virtual Environment in PyCharm
-  - Files -> Settings -> "Gear Icon" -> Add -> "Existing Environment" -> Ok
+  - Files -> Settings -> Project: DKCrawlerV2 -> Python Interpreter -> "Gear Icon" -> Add -> "Existing Environment" -> Apply and Ok
+  - Wait for indexing to complete
   
 - Finally, you can run scripts in AppSubcat or AppVendor
