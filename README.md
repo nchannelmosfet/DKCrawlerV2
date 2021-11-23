@@ -51,7 +51,7 @@ Just keep click "Next" and install with all default options.
   mkdir Projects
   
   # change directory to C:/Projects/
-  cd Project
+  cd Projects
   
   # clone the repo
   git clone https://github.com/nchannelmosfet/DKCrawlerV2.git
@@ -60,7 +60,7 @@ Just keep click "Next" and install with all default options.
   cd DKCrawlerV2
   
   # Run install.ps1 script to install the dependencies
-  install.ps1
+  .\install.ps1
   
   # open folder in File Explorer
   explorer.exe .
