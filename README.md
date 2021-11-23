@@ -41,23 +41,36 @@ Just keep click "Next" and install with all default options.
 - Run PowerShell 7 as Administrator 
   - Click Windows Search icon, type "PowerShell 7"
   - Run "PowerShell 7 (x64)" as Administrator
-  - Run the following commands on PowerShell 7
-  - ```
-    # change directory (aka folder) to C:/
-    # use your desire directory to store the project
-    cd /
-    
-    # create the Projects directory 
-    mkdir Projects
-    
-    # change directory to C:/Projects/
-    cd Project
-    
-    # clone the repo
-    git clone https://github.com/nchannelmosfet/DKCrawlerV2.git
-    
-    # change directory to C:/Projects/DKCrawlerV2
-    cd DKCrawlerV2
-    
-    # Run install.ps1 script to install the dependencies
-    ```
+- Run the following commands on PowerShell 7
+  ```PowerShell
+  # change directory (aka folder) to C:/
+  # use your desire directory to store the project
+  cd /
+  
+  # create the Projects directory 
+  mkdir Projects
+  
+  # change directory to C:/Projects/
+  cd Project
+  
+  # clone the repo
+  git clone https://github.com/nchannelmosfet/DKCrawlerV2.git
+  
+  # change directory to C:/Projects/DKCrawlerV2
+  cd DKCrawlerV2
+  
+  # Run install.ps1 script to install the dependencies
+  install.ps1
+  
+  # open folder in File Explorer
+  explorer.exe .
+  ```
+  
+- In the newly opened File Explorer windows
+  - Right click 
+  - Click "Open Folder as PyCharm Community Edition Project"
+
+- Configure Virtual Environment in PyCharm
+  - Files -> Settings -> "Gear Icon" -> Add -> "Existing Environment" -> Ok
+  
+- Finally, you can run scripts in AppSubcat or AppVendor
