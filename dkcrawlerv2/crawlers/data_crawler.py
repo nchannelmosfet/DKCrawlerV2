@@ -81,6 +81,7 @@ class AsyncDataCrawler:
                 self.logger.info('Select only in-stock items. ')
 
         await page.click(self.selectors['per-page-selector'])
+        self.logger.info('Clicked page size selector. ')
         await page.click(self.selectors['per-page-100'])
         self.logger.info('Set page size to 100 item per page. ')
 
@@ -182,7 +183,6 @@ class AsyncDataCrawler:
             await context.close()
             await browser.close()
             self.logger.info('Crawl finished, closing browser and browser context. ')
-            self.combine_pages()
 
 
 class AsyncDataCrawlerRunner:
@@ -226,6 +226,7 @@ class AsyncDataCrawlerRunner:
                 'msg': 'Retry crawling with AppSubCat'
             }
             self.logger.error(jsonify(error_msg))
+        crawler.combine_pages()
 
     async def crawl_all(self):
         tasks = [self.create_crawl_job(url) for url in self.start_urls]
