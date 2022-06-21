@@ -100,21 +100,23 @@ def retry_on_exception(attempts: int = 5, delay: float = 10.0):
     """
     Decorator for retrying function on Exception
     """
-    logger = set_up_logger("retry_logger")
 
     def decorator(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             page = kwargs["page"]
+            logger = kwargs["logger"]
+
             exception = None
             for _ in range(attempts):
                 try:
+                    logger.info(f"Download succeeded without retry")
                     return await func(*args, **kwargs)
                 except Exception as ex:
                     logger.info(f"retried {attempts} times")
                     exception = ex
-                    page.reload(wait_until="networkidle")
-                page.wait_for_timeout(delay * 1000)
+                    await page.reload(wait_until="networkidle")
+                await page.wait_for_timeout(delay * 1000)
             raise exception
         return wrapper
     return decorator

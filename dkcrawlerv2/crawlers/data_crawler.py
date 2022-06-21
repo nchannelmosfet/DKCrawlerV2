@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 import os
 import re
 from playwright.async_api import async_playwright
@@ -10,6 +11,33 @@ from dkcrawlerv2.utils import (
 import pandas as pd
 
 
+class Selector(str, Enum):
+    cookie_ok = 'div.cookie-wrapper a.secondary.button',
+    per_page_selector = '[data-testid="per-page-selector"] > div.MuiSelect-root'
+    per_page_100 = '[data-testid="per-page-100"]'
+    confirm_per_page_100 = '[data-testid="per-page-selector"] > input[value="100"]'
+    in_stock = '[data-testid="filter--2-option-5"]'
+    normally_stocking = '[data-testid="filter--2-option-9"] input[type="checkbox"]'
+    apply_all = '[data-testid="apply-all-button"]'
+    download_popup = '[data-testid="download-table-popup-trigger-button"]'
+    download_btn = '[data-testid="download-table-button"]'
+    cur_page = '[data-testid="pagination-container"] > button[disabled]'
+    next_page = '[data-testid="btn-next-page"]'
+    next_page_alt = '[data-testid="pagination-container"] > button[disabled] + button'
+    next_page_rendered = '[data-testid="pagination-container"] > button[value="{0}"] + button[disabled]'
+    page_nav = '[data-testid="per-page-selector-container"] > div:last-child > span'
+    active_parts = '[data-testid="filter-1989-option-0"]'
+    digikey_com = '[track-data="Choose Your Location – Stay on US Site"] > span'
+    msg_close = 'a.header-shipping-msg-close'
+    btn_first_page = '[data-testid="btn-first-page"]'
+    dkpn_sort_asc = 'button[data-testid="sort--104-asc"] > svg'
+    remove_filters = '[data-testid="filter-box-remove-all"]'
+    dkpn_sorted = '[data-testid="sort--104-asc"][disabled]'
+    product_count = '[data-testid="product-count"]'
+    usa_domain = '''div.domain-suggest__flag[onclick="__footerDomainSelect('com')"]'''
+    product_count_remaining = '[data-testid="product-count-remaining"]'
+
+
 class AsyncDataCrawler:
     def __init__(self, start_url, base_download_dir, headless=True, in_stock_only=True):
         self.start_url = start_url
@@ -17,33 +45,6 @@ class AsyncDataCrawler:
         self.headless = headless
         self.in_stock_only = in_stock_only
         self.use_next_page_alt = False
-
-        self.selectors = {
-            'cookie_ok': 'div.cookie-wrapper a.secondary.button',
-            'per-page-selector': '[data-testid="per-page-selector"] > div.MuiSelect-root',
-            'per-page-100': '[data-testid="per-page-100"]',
-            'confirm-per-page-100': '[data-testid="per-page-selector"] > input[value="100"]',
-            'in-stock': '[data-testid="filter--2-option-5"]',
-            'normally-stocking': '[data-testid="filter--2-option-9"] input[type="checkbox"]',
-            'apply-all': '[data-testid="apply-all-button"]',
-            'download-popup': '[data-testid="download-table-popup-trigger-button"]',
-            'download-btn': '[data-testid="download-table-button"]',
-            'cur-page': '[data-testid="pagination-container"] > button[disabled]',
-            'next-page': '[data-testid="btn-next-page"]',
-            'next-page-alt': '[data-testid="pagination-container"] > button[disabled] + button',
-            'next-page-rendered': '[data-testid="pagination-container"] > button[value="{0}"] + button[disabled]',
-            'page-nav': '[data-testid="per-page-selector-container"] > div:last-child > span',
-            'active-parts': '[data-testid="filter-1989-option-0"]',
-            'digikey.com': '[track-data="Choose Your Location – Stay on US Site"] > span',
-            'msg_close': 'a.header-shipping-msg-close',
-            'btn-first-page': '[data-testid="btn-first-page"]',
-            'dkpn-sort-asc': 'button[data-testid="sort--104-asc"] > svg',
-            'remove-filters': '[data-testid="filter-box-remove-all"]',
-            'dkpn-sorted': '[data-testid="sort--104-asc"][disabled]',
-            'product-count': '[data-testid="product-count"]',
-            'usa-domain': '''div.domain-suggest__flag[onclick="__footerDomainSelect('com')"]''',
-            'product_count_remaining': '[data-testid="product-count-remaining"]',
-        }
 
         url_split = remove_url_qs(start_url).split('/')
         self.subcategory = url_split[-2].replace('-', '_')
@@ -62,28 +63,28 @@ class AsyncDataCrawler:
         await page.set_viewport_size(viewport_size)
         self.logger.info(f'Set viewport size to: {viewport_size}')
 
-        await page.click(self.selectors['cookie_ok'])
+        await page.click(Selector.cookie_ok)
 
         try:
-            await page.click(self.selectors['usa-domain'], timeout=5000)
+            await page.click(Selector.usa_domain, timeout=5000)
         except TimeoutError:
             pass
 
         if self.in_stock_only:
-            await page.click(self.selectors['in-stock'])
-            product_count_remaining = await page.text_content(self.selectors['product_count_remaining'])
+            await page.click(Selector.in_stock)
+            product_count_remaining = await page.text_content(Selector.product_count_remaining)
             product_count_remaining = parse_int(product_count_remaining)
 
             if product_count_remaining <= 1:
-                await page.click(self.selectors['in-stock'])
+                await page.click(Selector.in_stock)
             else:
-                await page.click(self.selectors['apply-all'])
-                await page.wait_for_selector(self.selectors['remove-filters'])
+                await page.click(Selector.apply_all)
+                await page.wait_for_selector(Selector.remove_filters)
                 self.logger.info('Select only in-stock items. ')
 
-        await page.click(self.selectors['per-page-selector'])
+        await page.click(Selector.per_page_selector)
         self.logger.info('Clicked page size selector. ')
-        await page.click(self.selectors['per-page-100'])
+        await page.click(Selector.per_page_100)
         self.logger.info('Set page size to 100 item per page. ')
 
         try:
@@ -103,14 +104,14 @@ class AsyncDataCrawler:
         except TimeoutError:
             pass
 
-        await page.click(self.selectors['dkpn-sort-asc'])
-        await page.wait_for_selector(self.selectors['dkpn-sorted'])
+        await page.click(Selector.dkpn_sort_asc)
+        await page.wait_for_selector(Selector.dkpn_sorted)
         self.logger.info('Sort items by DK Part# ascending. ')
 
     async def download(self, page, filename):
         async with page.expect_download() as download_info:
-            await page.click(self.selectors['download-popup'])
-            await page.click(self.selectors['download-btn'])
+            await page.click(Selector.download_popup)
+            await page.click(Selector.download_btn)
         download = await download_info.value
         file_path = os.path.join(self.download_dir, filename)
         file_path = os.path.realpath(file_path)
@@ -127,11 +128,11 @@ class AsyncDataCrawler:
     async def go_next_page(self, page, cur_page, use_next_page_alt):
         async with page.expect_navigation(wait_until='networkidle'):
             if use_next_page_alt:
-                await page.click(self.selectors['next-page-alt'])
+                await page.click(Selector.next_page_alt)
                 await asyncio.sleep(2.0)
             else:
-                await page.click(self.selectors['next-page'])
-            await page.wait_for_selector(self.selectors['next-page-rendered'].format(cur_page))
+                await page.click(Selector.next_page)
+            await page.wait_for_selector(Selector.next_page_rendered.format(cur_page))
 
     def combine_pages(self):
         in_files = get_file_list(self.download_dir, suffix='.csv')
@@ -156,11 +157,11 @@ class AsyncDataCrawler:
             await page.goto(self.start_url)
             await self.config_page(page)
 
-            page_nav = await page.text_content(self.selectors['page-nav'])
+            page_nav = await page.text_content(Selector.page_nav)
             self.max_page = int(re.findall(r'/(\d+)|$', page_nav)[0])
 
             while True:
-                cur_page = await self.download_page(page=page)
+                cur_page = await self.download_page(page=page, logger=self.logger)
 
                 if len(self.downloaded_pages) == self.max_page or cur_page == self.max_page:
                     break
@@ -176,16 +177,16 @@ class AsyncDataCrawler:
             self.logger.info('Crawl finished, closing browser and browser context. ')
 
     @retry_on_exception(attempts=5, delay=10.0)
-    async def download_page(self, page):
+    async def download_page(self, page, logger):
         self.use_next_page_alt = False
-        cur_page = int(await page.text_content(self.selectors['cur-page'], timeout=60 * 1000))
+        cur_page = int(await page.text_content(Selector.cur_page, timeout=60 * 1000))
         if cur_page not in self.downloaded_pages:
             self.downloaded_pages.add(cur_page)
-            self.logger.info({'Current Page': cur_page, 'Max Page': self.max_page})
+            logger.info({'Current Page': cur_page, 'Max Page': self.max_page})
             filename = f'{self.subcategory}_{cur_page}.csv'
             await self.download(page, filename)
         else:
-            self.logger.warning(f'Page {cur_page} has already been downloaded. ')
+            logger.warning(f'Page {cur_page} has already been downloaded. ')
             self.use_next_page_alt = True
             await self.scroll_up_down(page)
         return cur_page
