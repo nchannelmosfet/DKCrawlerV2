@@ -4,6 +4,7 @@ import json
 import logging
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
+import functools
 
 
 def get_batches(seq, batch_size=1):
@@ -93,3 +94,27 @@ def remove_url_qs(url):
 
 def parse_int(s):
     return int(re.sub(r'\D', '', s))
+
+
+def retry_on_exception(attempts: int = 5, delay: float = 10.0):
+    """
+    Decorator for retrying function on Exception
+    """
+    logger = set_up_logger("retry_logger")
+
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            page = kwargs["page"]
+            exception = None
+            for _ in range(attempts):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as ex:
+                    logger.info(f"retried {attempts} times")
+                    exception = ex
+                    page.reload(wait_until="networkidle")
+                page.wait_for_timeout(delay * 1000)
+            raise exception
+        return wrapper
+    return decorator

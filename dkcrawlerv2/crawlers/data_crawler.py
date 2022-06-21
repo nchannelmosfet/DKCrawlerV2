@@ -5,7 +5,7 @@ from playwright.async_api import async_playwright
 from playwright._impl._api_types import TimeoutError
 from dkcrawlerv2.utils import (
     get_file_list, concat_data, set_up_logger, remove_url_qs,
-    get_batches, get_latest_session_index, jsonify, parse_int
+    get_batches, get_latest_session_index, jsonify, parse_int, retry_on_exception
 )
 import pandas as pd
 
@@ -16,6 +16,7 @@ class AsyncDataCrawler:
         self.base_download_dir = base_download_dir
         self.headless = headless
         self.in_stock_only = in_stock_only
+        self.use_next_page_alt = False
 
         self.selectors = {
             'cookie_ok': 'div.cookie-wrapper a.secondary.button',
@@ -159,23 +160,13 @@ class AsyncDataCrawler:
             self.max_page = int(re.findall(r'/(\d+)|$', page_nav)[0])
 
             while True:
-                use_next_page_alt = False
-                cur_page = int(await page.text_content(self.selectors['cur-page']))
-                if cur_page not in self.downloaded_pages:
-                    self.downloaded_pages.add(cur_page)
-                    self.logger.info({'Current Page': cur_page, 'Max Page': self.max_page})
-                    filename = f'{self.subcategory}_{cur_page}.csv'
-                    await self.download(page, filename)
-                else:
-                    self.logger.warning(f'Page {cur_page} has already been downloaded. ')
-                    use_next_page_alt = True
-                    await self.scroll_up_down(page)
+                cur_page = await self.download_page(page=page)
 
                 if len(self.downloaded_pages) == self.max_page or cur_page == self.max_page:
                     break
 
                 try:
-                    await self.go_next_page(page, cur_page, use_next_page_alt)
+                    await self.go_next_page(page, cur_page, self.use_next_page_alt)
                     self.logger.info('Go to next page')
                 except TimeoutError:
                     pass
@@ -183,6 +174,21 @@ class AsyncDataCrawler:
             await context.close()
             await browser.close()
             self.logger.info('Crawl finished, closing browser and browser context. ')
+
+    @retry_on_exception(attempts=5, delay=10.0)
+    async def download_page(self, page):
+        self.use_next_page_alt = False
+        cur_page = int(await page.text_content(self.selectors['cur-page'], timeout=60 * 1000))
+        if cur_page not in self.downloaded_pages:
+            self.downloaded_pages.add(cur_page)
+            self.logger.info({'Current Page': cur_page, 'Max Page': self.max_page})
+            filename = f'{self.subcategory}_{cur_page}.csv'
+            await self.download(page, filename)
+        else:
+            self.logger.warning(f'Page {cur_page} has already been downloaded. ')
+            self.use_next_page_alt = True
+            await self.scroll_up_down(page)
+        return cur_page
 
 
 class AsyncDataCrawlerRunner:
@@ -229,6 +235,7 @@ class AsyncDataCrawlerRunner:
             self.logger.error("==========Full Error Message==========")
             self.logger.error(ex)
             self.logger.error("======================================")
+            raise
         crawler.combine_pages()
 
     async def crawl_all(self):
