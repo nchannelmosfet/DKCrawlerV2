@@ -114,7 +114,7 @@ def retry_on_exception(attempts: int = 5, delay: float = 10.0):
                 except Exception as ex:
                     logger.info(f"retried {cur_attempt + 1} times")
                     exception = ex
-                    await page.reload(wait_until="networkidle")
+                    await page.reload(wait_until="networkidle", timeout=60000)
                     logger.info(f"reload page")
                 await page.wait_for_timeout(delay * 1000)
             raise exception
