@@ -219,13 +219,16 @@ class AsyncDataCrawlerRunner:
         self.logger.info(f'Created crawl job for URL: {url}')
         try:
             await crawler.crawl()
-        except TimeoutError:
+        except TimeoutError as ex:
             error_msg = {
                 'url': url,
                 'error': 'Timeout exceeded.',
                 'msg': 'Retry crawling with AppSubCat'
             }
             self.logger.error(jsonify(error_msg))
+            self.logger.error("==========Full Error Message==========")
+            self.logger.error(ex)
+            self.logger.error("======================================")
         crawler.combine_pages()
 
     async def crawl_all(self):

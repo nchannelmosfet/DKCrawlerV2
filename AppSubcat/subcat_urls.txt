@@ -2,7 +2,7 @@
 # Comments must start with '#'
 
 # short running jobs
-https://www.digikey.com/en/products/filter/box-accessories/595
+# https://www.digikey.com/en/products/filter/box-accessories/595
 # https://www.digikey.com/en/products/filter/boxes/594
 # https://www.digikey.com/en/products/filter/alarms-buzzers-and-sirens/157
 # https://www.digikey.com/en/products/filter/accessories/159
