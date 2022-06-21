@@ -2,7 +2,7 @@ import asyncio
 from enum import Enum
 import os
 import re
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Page
 from playwright._impl._api_types import TimeoutError
 from dkcrawlerv2.utils import (
     get_file_list, concat_data, set_up_logger, remove_url_qs,
@@ -39,7 +39,7 @@ class Selector(str, Enum):
 
 
 class AsyncDataCrawler:
-    def __init__(self, start_url, base_download_dir, headless=True, in_stock_only=True):
+    def __init__(self, start_url: str, base_download_dir: str, headless=True, in_stock_only=True):
         self.start_url = start_url
         self.base_download_dir = base_download_dir
         self.headless = headless
@@ -58,7 +58,7 @@ class AsyncDataCrawler:
         self.log_file_path = os.path.join(self.download_dir, f'{self.subcategory}.log')
         self.logger = set_up_logger(self.subcategory, self.log_file_path)
 
-    async def config_page(self, page):
+    async def config_page(self, page: Page):
         viewport_size = {'width': 1920, 'height': 1080}
         await page.set_viewport_size(viewport_size)
         self.logger.info(f'Set viewport size to: {viewport_size}')
@@ -108,7 +108,7 @@ class AsyncDataCrawler:
         await page.wait_for_selector(Selector.dkpn_sorted)
         self.logger.info('Sort items by DK Part# ascending. ')
 
-    async def download(self, page, filename):
+    async def download(self, page: Page, filename: str):
         async with page.expect_download() as download_info:
             await page.click(Selector.download_popup)
             await page.click(Selector.download_btn)
@@ -125,14 +125,18 @@ class AsyncDataCrawler:
         for offset in [pos_offset, neg_offset]:
             await page.evaluate(f"window.scrollTo(0, {offset});")
 
-    async def go_next_page(self, page, cur_page, use_next_page_alt):
-        async with page.expect_navigation(wait_until='networkidle'):
-            if use_next_page_alt:
-                await page.click(Selector.next_page_alt)
-                await asyncio.sleep(2.0)
-            else:
-                await page.click(Selector.next_page)
-            await page.wait_for_selector(Selector.next_page_rendered.format(cur_page))
+    async def go_next_page(self, page: Page, cur_page: int, use_next_page_alt: bool):
+        try:
+            async with page.expect_navigation(wait_until='networkidle'):
+                if use_next_page_alt:
+                    await page.click(Selector.next_page_alt)
+                    await page.wait_for_timeout(2000)
+                else:
+                    await page.click(Selector.next_page)
+                await page.wait_for_selector(Selector.next_page_rendered.format(cur_page))
+            self.logger.info('Go to next page')
+        except TimeoutError:
+            pass
 
     def combine_pages(self):
         in_files = get_file_list(self.download_dir, suffix='.csv')
@@ -148,6 +152,9 @@ class AsyncDataCrawler:
         combined_df.to_excel(out_path, index=False)
         self.logger.info(f'{self.subcategory} data combined and saved at: \n{out_path}')
 
+    def all_pages_downloaded(self, cur_page: int):
+        return len(self.downloaded_pages) == self.max_page or cur_page == self.max_page
+
     async def crawl(self):
         async with async_playwright() as playwright:
             browser = await playwright.chromium.launch(headless=self.headless)
@@ -162,22 +169,19 @@ class AsyncDataCrawler:
 
             while True:
                 cur_page = await self.download_page(page=page, logger=self.logger)
+                self.logger.info(f"Download succeeded without retry")
 
-                if len(self.downloaded_pages) == self.max_page or cur_page == self.max_page:
+                if self.all_pages_downloaded(cur_page):
                     break
 
-                try:
-                    await self.go_next_page(page, cur_page, self.use_next_page_alt)
-                    self.logger.info('Go to next page')
-                except TimeoutError:
-                    pass
+                await self.go_next_page(page, cur_page, self.use_next_page_alt)
 
             await context.close()
             await browser.close()
             self.logger.info('Crawl finished, closing browser and browser context. ')
 
     @retry_on_exception(attempts=5, delay=10.0)
-    async def download_page(self, page, logger):
+    async def download_page(self, page: Page, logger):
         self.use_next_page_alt = False
         cur_page = int(await page.text_content(Selector.cur_page, timeout=60 * 1000))
         if cur_page not in self.downloaded_pages:

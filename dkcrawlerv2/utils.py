@@ -108,12 +108,11 @@ def retry_on_exception(attempts: int = 5, delay: float = 10.0):
             logger = kwargs["logger"]
 
             exception = None
-            for _ in range(attempts):
+            for cur_attempt in range(attempts):
                 try:
-                    logger.info(f"Download succeeded without retry")
                     return await func(*args, **kwargs)
                 except Exception as ex:
-                    logger.info(f"retried {attempts} times")
+                    logger.info(f"retried {cur_attempt + 1} times")
                     exception = ex
                     await page.reload(wait_until="networkidle")
                 await page.wait_for_timeout(delay * 1000)
