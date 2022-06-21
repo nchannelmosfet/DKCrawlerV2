@@ -225,7 +225,7 @@ class AsyncDataCrawlerRunner:
             f'CrawlerRunner initialized with params:\n{pretty_params}'
         )
 
-    async def create_crawl_job(self, url):
+    async def create_crawl_job(self, url: str):
         crawler = AsyncDataCrawler(url, self.download_dir, self.headless, self.in_stock_only)
         self.logger.info(f'Created crawl job for URL: {url}')
         try:
