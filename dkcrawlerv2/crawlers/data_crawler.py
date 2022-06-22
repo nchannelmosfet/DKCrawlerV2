@@ -240,7 +240,6 @@ class AsyncDataCrawlerRunner:
             self.logger.error("==========Full Error Message==========")
             self.logger.error(ex)
             self.logger.error("======================================")
-            raise
         crawler.combine_pages()
 
     async def crawl_all(self):
