@@ -63,8 +63,11 @@ class AsyncDataCrawler:
         await page.set_viewport_size(viewport_size)
         self.logger.info(f'Set viewport size to: {viewport_size}')
 
-        await page.click(Selector.beta_toggle)
-        self.logger.info("disable beta mode")
+        try:
+            await page.click(Selector.beta_toggle)
+            self.logger.info("disable beta mode")
+        except TimeoutError:
+            pass
 
         try:
             await page.click(Selector.cookie_ok)
