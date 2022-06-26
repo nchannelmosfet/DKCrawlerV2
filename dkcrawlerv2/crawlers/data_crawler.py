@@ -17,7 +17,6 @@ class Selector(str, Enum):
     per_page_100 = '[data-testid="per-page-100"]'
     confirm_per_page_100 = '[data-testid="per-page-selector"] > input[value="100"]'
     in_stock = '[data-testid="filter--2-option-5"]'
-    normally_stocking = '[data-testid="filter--2-option-9"] input[type="checkbox"]'
     apply_all = '[data-testid="apply-all-button"]'
     download_popup = '[data-testid="download-table-popup-trigger-button"]'
     download_btn = '[data-testid="download-table-button"]'
@@ -36,6 +35,7 @@ class Selector(str, Enum):
     product_count = '[data-testid="product-count"]'
     usa_domain = '''div.domain-suggest__flag[onclick="__footerDomainSelect('com')"]'''
     product_count_remaining = '[data-testid="product-count-remaining"]'
+    beta_toggle = '#beta-toggle'
 
 
 class AsyncDataCrawler:
@@ -63,7 +63,13 @@ class AsyncDataCrawler:
         await page.set_viewport_size(viewport_size)
         self.logger.info(f'Set viewport size to: {viewport_size}')
 
-        await page.click(Selector.cookie_ok)
+        await page.click(Selector.beta_toggle)
+        self.logger.info("disable beta mode")
+
+        try:
+            await page.click(Selector.cookie_ok)
+        except TimeoutError:
+            pass
 
         try:
             await page.click(Selector.usa_domain, timeout=5000)
