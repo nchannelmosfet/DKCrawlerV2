@@ -197,11 +197,11 @@ class AsyncDataCrawler:
             logger.info({'Current Page': cur_page, 'Max Page': self.max_page})
             filename = f'{self.subcategory}_{cur_page}.csv'
             await self.download(page, filename)
+            self.downloaded_pages.add(cur_page)
         else:
             logger.warning(f'Page {cur_page} has already been downloaded. ')
             self.use_next_page_alt = True
             await self.scroll_up_down(page)
-        self.downloaded_pages.add(cur_page)
         return cur_page
 
 
