@@ -9,6 +9,7 @@ from dkcrawlerv2.utils import (
     get_batches, get_latest_session_index, jsonify, parse_int, retry_on_exception
 )
 import pandas as pd
+import math
 
 
 class Selector(str, Enum):
@@ -24,18 +25,17 @@ class Selector(str, Enum):
     next_page = '[data-testid="btn-next-page"]'
     next_page_alt = '[data-testid="pagination-container"] > button[disabled] + button'
     next_page_rendered = '[data-testid="pagination-container"] > button[value="{0}"] + button[disabled]'
-    page_nav = '[data-testid="per-page-selector-container"] > div:last-child > span'
+    page_nav = '[data-testid="per-page-selector-container"]'
     active_parts = '[data-testid="filter-1989-option-0"]'
     digikey_com = '[track-data="Choose Your Location – Stay on US Site"] > span'
     msg_close = 'a.header-shipping-msg-close'
     btn_first_page = '[data-testid="btn-first-page"]'
-    dkpn_sort_asc = 'button[data-testid="sort--104-asc"] > svg'
+    mfpn_sort_asc = 'button[data-testid="sort--100-asc"] > svg'
     remove_filters = '[data-testid="filter-box-remove-all"]'
-    dkpn_sorted = '[data-testid="sort--104-asc"][disabled]'
+    mfpn_sorted = '[data-testid="sort--100-asc"][disabled]'
     product_count = '[data-testid="product-count"]'
     usa_domain = '''div.domain-suggest__flag[onclick="__footerDomainSelect('com')"]'''
     product_count_remaining = '[data-testid="product-count-remaining"]'
-    beta_toggle = '#beta-toggle'
 
 
 class AsyncDataCrawler:
@@ -62,12 +62,6 @@ class AsyncDataCrawler:
         viewport_size = {'width': 1920, 'height': 1080}
         await page.set_viewport_size(viewport_size)
         self.logger.info(f'Set viewport size to: {viewport_size}')
-
-        try:
-            await page.click(Selector.beta_toggle)
-            self.logger.info("disable beta mode")
-        except TimeoutError:
-            pass
 
         try:
             await page.click(Selector.cookie_ok)
@@ -113,9 +107,9 @@ class AsyncDataCrawler:
         except TimeoutError:
             pass
 
-        await page.click(Selector.dkpn_sort_asc)
-        await page.wait_for_selector(Selector.dkpn_sorted)
-        self.logger.info('Sort items by DK Part# ascending. ')
+        await page.click(Selector.mfpn_sort_asc)
+        await page.wait_for_selector(Selector.mfpn_sorted)
+        self.logger.info('Sort items by MFR Part# ascending. ')
 
     async def download(self, page: Page, filename: str):
         async with page.expect_download() as download_info:
@@ -174,7 +168,9 @@ class AsyncDataCrawler:
             await self.config_page(page)
 
             page_nav = await page.text_content(Selector.page_nav)
-            self.max_page = int(re.findall(r'/(\d+)|$', page_nav)[0])
+            item_count = int(re.findall(r"of (.+)", page_nav)[0].replace(",", ""))
+            self.max_page = math.ceil(item_count / 100)
+            self.logger.info(f"Calculated {self.max_page} max page")
 
             while True:
                 cur_page = await self.download_page(page=page, logger=self.logger)

@@ -2,13 +2,13 @@
 # Comments must start with '#'
 
 # short running jobs
-# https://www.digikey.com/en/products/filter/box-accessories/595
-# https://www.digikey.com/en/products/filter/boxes/594
-# https://www.digikey.com/en/products/filter/alarms-buzzers-and-sirens/157
-# https://www.digikey.com/en/products/filter/accessories/159
+https://www.digikey.com/en/products/filter/box-accessories/595
+https://www.digikey.com/en/products/filter/boxes/594
+https://www.digikey.com/en/products/filter/alarms-buzzers-and-sirens/157
+https://www.digikey.com/en/products/filter/accessories/159
 
 # long running jobs
-https://www.digikey.com/en/products/filter/circular-connectors/436
+# https://www.digikey.com/en/products/filter/circular-connectors/436
 # https://www.digikey.com/en/products/filter/rectangular-cable-assemblies/450
 # https://www.digikey.com/en/products/filter/coaxial-cables-rf/456
 # https://www.digikey.com/en/products/filter/thermal-heat-sinks/219
