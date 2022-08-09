@@ -14,9 +14,8 @@ import math
 
 class Selector(str, Enum):
     cookie_ok = 'div.cookie-wrapper a.secondary.button',
-    per_page_selector = '[data-testid="per-page-selector"] > div.MuiSelect-root'
+    per_page_selector = '[data-testid="per-page-selector"] > div'
     per_page_100 = '[data-testid="per-page-100"]'
-    confirm_per_page_100 = '[data-testid="per-page-selector"] > input[value="100"]'
     in_stock = '[data-testid="filter--2-option-5"]'
     apply_all = '[data-testid="apply-all-button"]'
     download_popup = '[data-testid="download-table-popup-trigger-button"]'
@@ -27,9 +26,6 @@ class Selector(str, Enum):
     next_page_rendered = '[data-testid="pagination-container"] > button[value="{0}"] + button[disabled]'
     page_nav = '[data-testid="per-page-selector-container"]'
     active_parts = '[data-testid="filter-1989-option-0"]'
-    digikey_com = '[track-data="Choose Your Location – Stay on US Site"] > span'
-    msg_close = 'a.header-shipping-msg-close'
-    btn_first_page = '[data-testid="btn-first-page"]'
     mfpn_sort_asc = 'button[data-testid="sort--100-asc"] > svg'
     remove_filters = '[data-testid="filter-box-remove-all"]'
     mfpn_sorted = '[data-testid="sort--100-asc"][disabled]'
