@@ -28,7 +28,8 @@ async def main():
     crawler_runner = AsyncDataCrawlerRunner(
         subcat_urls, base_download_dir,
         headless=headless, session_name=None,
-        in_stock_only=in_stock_only
+        in_stock_only=in_stock_only,
+        max_concurrency=1
     )
     await crawler_runner.crawl_all()
     crawler_runner.combine_subcat_data()

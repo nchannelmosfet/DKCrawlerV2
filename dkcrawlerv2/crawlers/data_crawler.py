@@ -198,12 +198,15 @@ class AsyncDataCrawler:
 
 
 class AsyncDataCrawlerRunner:
-    def __init__(self, start_urls, base_download_dir, headless=True, in_stock_only=True, session_name=None):
+    def __init__(
+        self, start_urls, base_download_dir, headless=True,
+        in_stock_only=True, session_name=None, max_concurrency=3
+    ):
         self.start_urls = start_urls
         self.base_download_dir = base_download_dir
         self.headless = headless
         self.in_stock_only = in_stock_only
-        self.max_concurrency = 3
+        self.max_concurrency = max_concurrency
 
         session_index = get_latest_session_index(self.base_download_dir) + 1
         self.session_name = session_name or f'session{session_index}'

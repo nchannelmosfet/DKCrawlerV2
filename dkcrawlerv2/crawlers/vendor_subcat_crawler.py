@@ -1,7 +1,7 @@
 import asyncio
-import re
 from playwright.async_api import async_playwright
 from playwright._impl._page import Page
+from playwright._impl._api_types import TimeoutError
 from dkcrawlerv2.utils import set_up_logger, jsonify, remove_url_qs, parse_int
 from urllib.parse import urljoin
 import random
@@ -65,8 +65,9 @@ class VendorSubCategoryCrawler:
             await asyncio.sleep(1)
             final_subcat_urls = []
             if 'filter' in cur_url:
-                min_qty = await page.text_content('[data-atag="tr-minQty"] > span > div:last-child')
-                if min_qty == 'Non-Stock' and self.in_stock_only:
+
+                min_qty = await page.text_content('[data-atag="tr-qtyAvailable"] strong')
+                if min_qty == '0' and self.in_stock_only:
                     ignored_msg = {
                         'url': cur_url,
                         'action': 'ignored',
@@ -80,20 +81,27 @@ class VendorSubCategoryCrawler:
                         cur_url = remove_url_qs(cur_url)
                         await page.goto(cur_url)
 
+                    product_count = await page.text_content(self.selectors['product-count'])
+                    product_count = parse_int(product_count)
                     if self.in_stock_only:
                         await page.click(self.selectors['in-stock'])
-                        product_count_remaining = await page.text_content(self.selectors['product_count_remaining'])
-                        product_count_remaining = parse_int(product_count_remaining)
+                        product_count_remaining_visible = await page.locator(
+                            self.selectors['product_count_remaining']
+                        ).is_visible(timeout=2)
 
-                        if product_count_remaining <= 1:
-                            await page.click(self.selectors['in-stock'])
-                        else:
+                        product_count_remaining = product_count
+                        if product_count_remaining_visible:
+                            product_count_remaining = await page.text_content(self.selectors['product_count_remaining'])
+                            product_count_remaining = parse_int(product_count_remaining)
+
+                            if product_count_remaining <= 1:
+                                await page.click(self.selectors['in-stock'])
+
+                        if product_count_remaining > 1:
                             await page.click(self.selectors['apply-all'])
                             await page.wait_for_selector(self.selectors['remove-filters'])
                             self.logger.info('Select only in-stock items. ')
 
-                    product_count = await page.text_content(self.selectors['product-count'])
-                    product_count = parse_int(product_count)
                     url_info = {'url': cur_url, 'product_count': product_count}
                     self.subcat_url_info.append(url_info)
                     self.logger.info(f'Collected {jsonify(url_info)}')
@@ -108,7 +116,7 @@ class VendorSubCategoryCrawler:
                 self.logger.info(jsonify(ignored_msg))
                 return []
             else:
-                subcat_elems = await page.query_selector_all('[data-testid="subcategories-items"]')
+                subcat_elems = await page.query_selector_all('[data-testid="image-view"] > a')
                 subcat_urls = [urljoin(self.vendor_url, await el.get_attribute('href'))
                                for el in subcat_elems]
 

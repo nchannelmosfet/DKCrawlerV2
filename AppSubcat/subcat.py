@@ -12,7 +12,7 @@ async def main():
     if not os.path.exists(base_download_dir):
         os.mkdir(base_download_dir)
 
-    headless = True
+    headless = False
     session_name = None
     crawler_runner = AsyncDataCrawlerRunner(
         start_urls, base_download_dir,
