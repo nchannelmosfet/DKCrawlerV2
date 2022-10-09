@@ -4,7 +4,8 @@
 # short running jobs
 # https://www.digikey.com/en/products/filter/racks/597
 # https://www.digikey.com/en/products/filter/pluggable-cables/460
-https://www.digikey.com/en/products/filter/power-entry-connectors-inlets-outlets-modules/301
+# https://www.digikey.com/en/products/filter/power-entry-connectors-inlets-outlets-modules/301
+https://www.digikey.com/en/products/filter/battery-holders-clips-contacts/86
 # https://www.digikey.com/en/products/filter/box-accessories/595
 # https://www.digikey.com/en/products/filter/boxes/594
 # https://www.digikey.com/en/products/filter/alarms-buzzers-and-sirens/157

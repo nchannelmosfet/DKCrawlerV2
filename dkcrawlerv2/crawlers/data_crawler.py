@@ -156,7 +156,7 @@ class AsyncDataCrawler:
 
     async def crawl(self):
         async with async_playwright() as playwright:
-            browser = await playwright.chromium.launch(headless=self.headless)
+            browser = await playwright.firefox.launch(headless=self.headless)
             context = await browser.new_context(accept_downloads=True)
             page = await context.new_page()
 
