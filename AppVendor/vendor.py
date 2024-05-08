@@ -13,7 +13,7 @@ async def main():
 
     target_vendor_only = True
     in_stock_only = True
-    headless = True
+    headless = False
     log_file_path = os.path.join(base_download_dir, f'{vendor_name}.log')
 
     vendor_crawler = VendorSubCategoryCrawler(

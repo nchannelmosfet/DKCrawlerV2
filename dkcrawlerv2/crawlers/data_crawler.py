@@ -69,46 +69,50 @@ class AsyncDataCrawler:
         except TimeoutError:
             pass
 
-        if self.in_stock_only:
-            await page.click(Selector.in_stock)
-            product_count_remaining = await page.text_content(Selector.product_count_remaining)
-            product_count_remaining = parse_int(product_count_remaining)
+        # if self.in_stock_only:
+        #     await page.click(Selector.per_page_selector)
+        #     self.logger.info('Clicked page size selector. ')
+        #     await page.click(Selector.per_page_100)
+        #     self.logger.info('Set page size to 100 item per page. ')
 
-            if product_count_remaining <= 1:
-                await page.click(Selector.in_stock)
-            else:
-                await page.click(Selector.apply_all)
-                await page.wait_for_selector(Selector.remove_filters)
-                self.logger.info('Select only in-stock items. ')
+            # await page.click(Selector.in_stock)
+            # try:
+            #     product_count_remaining = await page.text_content(Selector.product_count_remaining)
+            # except TimeoutError:
+            #     product_count_remaining = await page.text_content(Selector.product_count)
+            # product_count_remaining = parse_int(product_count_remaining)
+            #
+            # if product_count_remaining <= 1:
+            #     await page.click(Selector.in_stock)
+            #     await page.click(Selector.apply_all)
+            # else:
+            #     await page.click(Selector.apply_all)
+            #     await page.wait_for_selector(Selector.remove_filters)
+            #     self.logger.info('Select only in-stock items. ')
 
-        await page.click(Selector.per_page_selector)
-        self.logger.info('Clicked page size selector. ')
-        await page.click(Selector.per_page_100)
-        self.logger.info('Set page size to 100 item per page. ')
-
-        try:
-            await page.wait_for_function(
-                '''
-                function checkRowCount() {
-                    let product_count = parseInt(document.querySelector('[data-testid="product-count"]').textContent);
-                    let row_count = document.querySelectorAll('[data-testid="data-table-0-row"]').length;
-                    if (product_count < 100) {
-                        return row_count === product_count;
-                    } else {
-                        return row_count === 100;
-                    }
-                }
-                '''
-            )
-        except TimeoutError:
-            pass
+        # try:
+        #     await page.wait_for_function(
+        #         '''
+        #         function checkRowCount() {
+        #             let product_count = parseInt(document.querySelector('[data-testid="product-count-remaining"]').textContent);
+        #             let row_count = document.querySelectorAll('[data-testid="data-table-0-row"]').length;
+        #             if (product_count < 100) {
+        #                 return row_count === product_count;
+        #             } else {
+        #                 return row_count === 100;
+        #             }
+        #         }
+        #         '''
+        #     )
+        # except TimeoutError:
+        #     pass
 
         await page.click(Selector.mfpn_sort_asc)
         await page.wait_for_selector(Selector.mfpn_sorted)
         self.logger.info('Sort items by MFR Part# ascending. ')
 
     async def download(self, page: Page, filename: str):
-        async with page.expect_download() as download_info:
+        async with page.expect_download(timeout=60000) as download_info:
             await page.click(Selector.download_popup)
             await page.click(Selector.download_btn)
         download = await download_info.value
@@ -203,7 +207,7 @@ class AsyncDataCrawlerRunner:
         self.base_download_dir = base_download_dir
         self.headless = headless
         self.in_stock_only = in_stock_only
-        self.max_concurrency = 3
+        self.max_concurrency = 1
 
         session_index = get_latest_session_index(self.base_download_dir) + 1
         self.session_name = session_name or f'session{session_index}'

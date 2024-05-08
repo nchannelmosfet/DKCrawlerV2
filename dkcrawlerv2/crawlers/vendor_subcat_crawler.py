@@ -1,6 +1,6 @@
 import asyncio
-import re
 from playwright.async_api import async_playwright
+from playwright._impl._api_types import TimeoutError
 from playwright._impl._page import Page
 from dkcrawlerv2.utils import set_up_logger, jsonify, remove_url_qs, parse_int
 from urllib.parse import urljoin
@@ -30,7 +30,7 @@ class VendorSubCategoryCrawler:
     async def crawl(self):
         self.subcat_url_info = []
         async with async_playwright() as playwright:
-            browser = await playwright.chromium.launch(headless=self.headless)
+            browser = await playwright.firefox.launch(headless=self.headless)
             context = await browser.new_context()
             page = await context.new_page()
             await page.set_viewport_size({'width': 1920, 'height': 1080})
@@ -65,8 +65,8 @@ class VendorSubCategoryCrawler:
             await asyncio.sleep(1)
             final_subcat_urls = []
             if 'filter' in cur_url:
-                min_qty = await page.text_content('[data-atag="tr-minQty"] > span > div:last-child')
-                if min_qty == 'Non-Stock' and self.in_stock_only:
+                min_qty = await page.text_content('[data-atag="tr-qtyAvailable"] strong')
+                if min_qty == '0' and self.in_stock_only:
                     ignored_msg = {
                         'url': cur_url,
                         'action': 'ignored',
@@ -82,7 +82,10 @@ class VendorSubCategoryCrawler:
 
                     if self.in_stock_only:
                         await page.click(self.selectors['in-stock'])
-                        product_count_remaining = await page.text_content(self.selectors['product_count_remaining'])
+                        try:
+                            product_count_remaining = await page.text_content(self.selectors['product_count_remaining'])
+                        except TimeoutError:
+                            product_count_remaining = await page.text_content(self.selectors['product-count'])
                         product_count_remaining = parse_int(product_count_remaining)
 
                         if product_count_remaining <= 1:
